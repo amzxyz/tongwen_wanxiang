@@ -7,22 +7,20 @@ schema_name:
 set_shuru_schema:         #配置此项就是选择什么输入法,同时拆分反查和中英文混输也将匹配该输入方案
   __include: algebra_zrm  #可选解码规则有   algebra_pinyin, algebra_zrm, algebra_flypy,  algebra_ziguang, algebra_sogou, algebra_mspy, algebra_abc  选择一个填入
 set_algebra_fuzhu:        #配置此项就是选择什么辅助码
-  __include: fuzhu_zrm    #可选辅助码有：kong，fuzhu_moqi, fuzhu_zrm, fuzhu_flypy, fuzhu_tiger, fuzhu_cj, fuzhu_wubi, fuzhu_jdh, fuzhu_hanxin 选择一个填入，空就是不需要辅助码
+  __include: fuzhu_zrm    #可选辅助码有：fuzhu_kong，fuzhu_moqi, fuzhu_zrm, fuzhu_flypy, fuzhu_tiger, fuzhu_cj, fuzhu_wubi, fuzhu_jdh, fuzhu_hanxin 选择一个填入
 pro_comment_format:           # 超级注释模块，子项配置 true 开启，false 关闭
   candidate_length: 1         # 候选词辅助码提醒的生效长度，0为关闭  但同时清空其它，应当使用上面开关来处理    
-  fuzhu_type: zrm             # 用于匹配对应的辅助码注释显示，基于默认词典的可选注释类型有：(moqi, flypy, zrm, jdh, cj, tiger, wubi, hanxin)选择一个填入，之所以单独列出是因为这里有更多的可配置性，而真正的辅助码默认只有7种
-  corrector: true              # 启用错音错词提醒，例如输入 geiyu 给予 获得 jǐ yǔ 提示
+  fuzhu_type: zrm             # 用于匹配对应的辅助码注释显示，基于默认词典的可选注释类型有：( moqi, flypy, zrm, jdh, cj, tiger, wubi, hanxin) tone (这个参数特殊，在注释里显示声调，不算辅助码，也填入此处)选择一个填入，之所以单独列出是因为这里有更多的可配置性，而真正的辅助码默认只有8种
   corrector_type: "{comment}"  # 换一种显示类型，比如"({comment})" 
-#共键或者模糊音：如果手机上使用，设定手机上的键盘布局，或者模糊音类型
 ########################以下是方案配置######################################################
 
 # 方案说明
 schema:
   schema_id: wanxiang
   __include: schema_name
-  version: "2024-09-15"
+  version: "2024-09-30"
   author:
-    - amzxyz
+    - gaboolic,amzxyz
   description: |
     万象拼音 支持常见双拼方案和全拼输入，辅助码同时支持墨奇;鹤形;自然码;简单鹤;仓颉首末;虎码首末;五笔前2;汉心码；采用万象归一的词库，换方案不换词库，不丢失用户词！
   dependencies:
@@ -46,17 +44,17 @@ switches:
   - name: emoji
     states: [ 💀, 😄 ]
     reset: 1
-  - name: pinyinhint
-    states: [ 🔇, 🔊 ]
+  - name: tone_display
+    states: [ 调, 音 ]
   - name: fuzhu_switch
     states: [ 助, 辅 ]
-  - name: zrm_chaifen
-    states: [ 然, 自 ]
+#  - name: zrm_chaifen
+#    states: [ 然, 自 ]
 #  - name: moqi_chaifen
 #    states: [ 奇, 墨 ]
-  - name: search_single_char  # search.lua 的功能开关，辅码查词时是否单字优先
-    abbrev: [词, 单]
-    states: [正常, 单字]
+#  - name: search_single_char  # search.lua 的功能开关，辅码查词时是否单字优先
+#    abbrev: [词, 单]
+#    states: [正常, 单字]
 
 
 # 输入引擎
@@ -78,6 +76,7 @@ engine:
     - matcher
     - abc_segmentor
     - affix_segmentor@radical_lookup  # 部件拆字自定义 tag
+    - affix_segmentor@reverse_stroke  #笔画反查
     - punct_segmentor
     - fallback_segmentor
   translators:
@@ -93,6 +92,7 @@ engine:
     - table_translator@cn_en            # 中英混合词汇
     - table_translator@chengyu            # 简码成语
     - table_translator@radical_lookup   # 部件拆字反查
+    - table_translator@reverse_stroke   #笔画反查
     - lua_translator@*force_gc          # 暴力 GC 降低内存
   filters:
     - lua_filter@*cold_word_drop.filter
@@ -101,6 +101,7 @@ engine:
     - lua_filter@*pin_cand_filter                   # 置顶候选项（顺序要求：置顶候选项 > Emoji > 简繁切换）
     - lua_filter@*reduce_english_filter             # 降低部分英语单词在候选项的位置
     - reverse_lookup_filter@radical_reverse_lookup  # 部件拆字滤镜，放在pro_comment_format前面，进一步被超级注释处理以获得拼音编码+辅助码的提示
+    - lua_filter@*pro_preedit_format                #输入码显示全拼并带上音调
     - simplifier@emoji                              # Emoji
     - simplifier@traditionalize                     # 简繁切换
     - simplifier@mars                               #火星文
@@ -114,6 +115,7 @@ engine:
 #    - lua_filter@*en_spacer                        #启用时中文状态下输入英文单词后面自动追加空格
     - lua_filter@*pro_comment_format                #超级注释模块，支持错词提示、辅助码显示，部件组字读音注释，支持个性化配置和关闭相应的功能，详情搜索pro_comment_format进行详细配置
     - uniquifier                                    # 去重
+
 
 
 # Lua 配置: 日期、时间、星期、ISO 8601、时间戳的触发关键字
@@ -285,12 +287,6 @@ zrm_chaifen:
   show_in_comment: true
   comment_format:
     - "xform/	/ /"
-#显示汉字读音，支持多音字
-pinyinhint:
-  option_name: pinyinhint
-  opencc_config: pinyinhint.json
-  tips: char
-  show_in_comment: true
 
 # 简繁切换
 traditionalize:
@@ -321,17 +317,25 @@ radical_lookup:
   enable_user_dict: false
   prefix: "az"  # 反查前缀（反查时前缀会消失影响打英文所以设定为两个字母，或可改成一个非字母符号），与 recognizer/patterns/radical_lookup 匹配
   tips: "  〔部件组字〕"
-  comment_format: #{comment}
+  comment_format:  #{comment}
     - erase/^.*$//
+
+reverse_stroke:
+  tag: reverse_stroke
+  dictionary: stroke 
+  db_class: stabledb
+  enable_completion: true
+  prefix: "ab"
+  suffix: "'"
+  tips: 〔笔画 hspnz〕 
+  preedit_format:
+    - xlit/hspnz/一丨丿丶乙/
+
 # 部件拆字滤镜
 radical_reverse_lookup:
-  tags: [ radical_lookup ]
-  # dictionary 为拼音标注来源。目前是显示本方案词库的注音，可去部件拆字方案下载更全的、带声调的、已编译好的词典
-  # https://github.com/mirtlecn/rime-radical-pinyin?tab=readme-ov-file#%E5%8F%8D%E6%9F%A5%E5%B8%A6%E5%A3%B0%E8%B0%83%E6%B3%A8%E9%9F%B3
-  dictionary: wanxiang
-  comment_format:     # 自定义 comment，例如在左右加上括号
-    - xform/^/(/
-    - xform/$/)/
+  tags: [ radical_lookup,reverse_stroke ]
+  overwrite_comment: true
+  dictionary: wanxiang #带音调的词典
 
 # 处理符合特定规则的输入码，如网址、反查
 recognizer:
@@ -339,6 +343,7 @@ recognizer:
   patterns:  # 再增加方案专有的：
     punct: "^/([0-9]|10|[A-Za-z]+)$"    # 响应 symbols.yaml 的 symbols
     radical_lookup: "^az[a-z]+$"        # 响应部件拆字的反查，与 radical_lookup/prefix 匹配
+    reverse_stroke: "^ab[A-Za-z]*$"     #响应笔画反查，与reverse_stroke/prefix 匹配
     unicode: "^U[a-f0-9]+"              # 脚本将自动获取第 2 个字符 U 作为触发前缀，响应 lua_translator@unicode，输出 Unicode 字符
     number: "^R[0-9]+[.]?[0-9]*"        # 脚本将自动获取第 2 个字符 R 作为触发前缀，响应 lua_translator@number_translator，数字金额大写
     gregorian_to_lunar: "^N[0-9]{1,8}"  # 脚本将自动获取第 2 个字符 N 作为触发前缀，响应 lua_translator@lunar，公历转农历，输入 N20240115 得到「二〇二三年腊月初五」
@@ -359,12 +364,13 @@ key_binder:
     - { when: has_menu, accept: "Control+z", toggle: zrm_chaifen }
 #使用快捷键Control+q开启和关闭辅助码显示
     - { when: has_menu, accept: "Control+q", toggle: fuzhu_switch }
-#    - { when: composing, accept: "Control+o", toggle: "fuzhu_type_switch" }
+    - { when: composing, accept: "Control+w", toggle: "tone_display" }
 # 使用 tab 在不同音节之间跳转
     - { when: has_menu, accept: "Tab", send: "Control+Right" }
     - { when: composing, accept: "Tab", send: "Control+Right" }
 #通过stick.lua显示到注释里，用来上屏带/的简码词汇。最好是用句号，这样可以与手机上可以做同样的定义，保持同样的习惯
 #    - { match: "[a-z]{1,3}", accept: ".",  send_sequence: "/1" } 
+
 
 
 
@@ -381,6 +387,7 @@ speller:
   algebra:
     __patch:
       - set_shuru_schema     #拼音转双拼码
+#      - mohuyin             #模糊音选择性开启
       - set_algebra_fuzhu    #辅助码部分
 ###############################以下是拼写运算规则中全拼转双拼码以及形码的过程，按照不同的方案规则划分段落###########################
 algebra_pinyin: 
@@ -389,6 +396,7 @@ algebra_pinyin:
 algebra_zrm: 
   __append:
     #- erase/^xx;.*$/
+    - xlit/āáǎàōóǒòēéěèīíǐìūúǔùǖǘǚǜü/aaaaooooeeeeiiiiuuuuvvvvv/
     - derive/^([jqxy])u(;.*)$/$1v$2/
     - derive/^([aoe])([ioun])(;.*)$/$1$1$2$3/
     - xform/^([aoe])(ng)?(;.*)$/$1$1$2$3/
@@ -422,6 +430,7 @@ algebra_zrm:
 algebra_flypy: 
   __append:
     #- erase/^xx$/
+    - xlit/āáǎàōóǒòēéěèīíǐìūúǔùǖǘǚǜü/aaaaooooeeeeiiiiuuuuvvvvv/
     - derive/^([jqxy])u(;.*)$/$1v$2/
     - derive/^([aoe])([ioun])(;.*)$/$1$1$2$3/
     - xform/^([aoe])(ng)?(;.*)$/$1$1$2$3/
@@ -454,6 +463,7 @@ algebra_flypy:
     - xlit/ⓆⓌⓇⓉⓎⓊⒾⓄⓅⓈⒹⒻⒼⒽⒿⓀⓁⓏⓍⒸⓋⒷⓃⓂ/qwrtyuiopsdfghjklzxcvbnm/
 algebra_mspy: 
   __append:
+    - xlit/āáǎàōóǒòēéěèīíǐìūúǔùǖǘǚǜü/aaaaooooeeeeiiiiuuuuvvvvv/
     - derive/^([jqxy])u(;.*)$/$1v$2/
     - derive/^([aoe].*)(;.*)$/o$1$2/
     - xform/^([ae])(.*)(;.*)$/$1$1$2$3/
@@ -489,6 +499,7 @@ algebra_mspy:
     - xlit/ⓆⓌⓇⓉⓎⓊⒾⓄⓅⓈⒹⒻⒼⒽⓂⒿⒸⓀⓁⓏⓍⓋⒷⓃ/qwrtyuiopsdfghmjcklzxvbn/
 algebra_sogou: 
   __append:
+    - xlit/āáǎàōóǒòēéěèīíǐìūúǔùǖǘǚǜü/aaaaooooeeeeiiiiuuuuvvvvv/
     - derive/^([jqxy])u(;.*)$/$1v$2/
     - derive/^([aoe].*)(;.*)$/o$1$2/
     - xform/^([ae])(.*)(;.*)$/$1$1$2$3/
@@ -523,6 +534,7 @@ algebra_sogou:
     - xlit/ⓆⓌⓇⓉⓎⓊⒾⓄⓅⓈⒹⒻⒼⒽⓂⒿⒸⓀⓁⓏⓍⓋⒷⓃ/qwrtyuiopsdfghmjcklzxvbn/
 algebra_ziguang: 
   __append:
+    - xlit/āáǎàōóǒòēéěèīíǐìūúǔùǖǘǚǜü/aaaaooooeeeeiiiiuuuuvvvvv/
     - derive/^([jqxy])u(;.*)$/$1v$2/
     - xform/^([aoe].*)(;.*)$/Ⓞ$1$2/  # 添上固定的零聲母o，先標記爲大寫O
     - xform/^(\w+?)en(;.*)$/$1Ⓦ$2/
@@ -555,6 +567,7 @@ algebra_ziguang:
     - xlit/ⓌⓉⓎⓊⒾⓄⓅⒶⒼⓈⒹⒻⒽⒿⓀⓁⓏⓍⒷⓃⓂⓆⓇ/wtyuiopagsdfhjklzxbnmqr/
 algebra_abc: 
   __append:
+    - xlit/āáǎàōóǒòēéěèīíǐìūúǔùǖǘǚǜü/aaaaooooeeeeiiiiuuuuvvvvv/
     - xform/^([aoe].*)(;.*)$/Ⓞ$1$2/
     - xform/^(\w+?)ei(;.*)$/$1Ⓠ$2/
     - xform/^(\w+?)ian(;.*)$/$1Ⓦ$2/
@@ -630,35 +643,23 @@ fuzhu_zrm:  ########################################位于词库第三个分号�
   __append:
     - xform|^(.{2});.*?;.*?;(.*?);.*$|$1;$2|
     - xform|^(\w+?);.*?;.*?;(.*?);.*$|$1;$2|  #匹配当前方案，转换为 双拼；辅助码（当前方案）的形式
-#以下是双拼运算
-    - derive/^(.+);.*$/$1/ # 纯双拼的情况
-#分号后面第一组辅助码
-    - derive/^(.+);(\w)(\w).*$/$1$2/ # 双拼+一位辅助码的情况
-    - derive/^(.+);(\w)(\w).*$/$1[$2/ # 双拼+[一位辅助码的情况
-    - abbrev/^(.+);(\w)(\w).*$/$1$2$3/ # 双拼+2位辅助码的情况，abbrev类型不可以整句内输入2位辅助码，必须加/
-    - derive|^(.+);(\w)(\w).*$|$1$2$3/| # 整句模式下，输入syff/ 出单字 增强单字性能
-#分号后面第二组辅助码
-    - derive/^(.+);.*?,(\w\w).*$/$1$2/
-    - derive/^(.+);.*?,(\w)(\w).*$/$1[$2/
-    - abbrev/^(.+);.*?,(\w)(\w).*$/$1$2$3/
-    - derive|^(.+);.*?,(\w)(\w).*$|$1$2$3/|
-#分号后面第三组辅助码
-    - derive/^(.+);.*?,.*?,(\w\w).*$/$1$2/
-    - derive/^(.+);.*?,.*?,(\w)(\w).*$/$1[$2/
-    - abbrev/^(.+);.*?,.*?,(\w)(\w).*$/$1$2$3/
-    - derive|^(.+);.*?,.*?,(\w)(\w).*$|$1$2$3/|
-#分号后面第四组辅助码
-    - derive/^(.+);.*?,.*?,.*?,(\w)(\w).*$/$1$2/ 
-    - derive/^(.+);.*?,.*?,.*?,(\w)(\w).*$/$1[$2/
-    - abbrev/^(.+);.*?,.*?,.*?,(\w)(\w).*$/$1$2$3/
-    - derive|^(.+);.*?,.*?,.*?,(\w)(\w).*$|$1$2$3/| 
-#特殊优化：部分音节字极少，几乎不参与构词，则提升对应四码字的优先级，仅对自然码双拼有效，其他双拼方案需作对应修改）
-    - derive/^(.+);(bd|dw|df|dw|yl|rw|fs|iw)$/$1$2/
-    - derive/^(.+);.*?,(bd|dw|df|dw|yl|rw|fs|iw)$/$1$2/
-    - derive/^(.+);.*?,.*?,(bd|dw|df|dw|yl|rw|fs|iw)$/$1$2/
-    - derive/^(.+);.*?,.*?,.*?,(bd|dw|df|dw|yl|rw|fs|iw)$/$1$2/
-# 删除原始编码加速检索
-    - erase/^(.+);(.+)$/   
+    - derive/^(.{2}|\w+?);.*$/$1/ # 纯双拼的情况
+    - derive/^(.{2}|\w+?);(\w)(\w).*$/$1$2/ # 双拼+一位辅助码的情况
+    - derive/^(.{2}|\w+?);(\w)(\w).*$/$1[$2/ # 双拼+[一位辅助码的情况
+    - derive/^(.{2}|\w+?);.*?,(\w)(\w).*$/$1$2/ # 双拼+一位辅助码的情况
+    - derive/^(.{2}|\w+?);.*?,(\w)(\w).*$/$1[$2/ # 双拼+[一位辅助码的情况
+
+    - abbrev/^(.{2}|\w+?);(\w)(\w).*$/$1$2$3/ # 双拼+2位辅助码的情况，abbrev类型不可以整句内输入2位辅助码，必须加o或/
+    - abbrev/^(.{2}|\w+?);.*?,(\w)(\w).*$/$1$2$3/ # 双拼+2位辅助码的情况，abbrev类型不可以整句内输入2位辅助码，必须加o或/
+
+    - derive/^(.{2}|\w+?);(\w)(\w).*$/$1$2$3o/ # 整句模式下，输入syffo 出单字 增强单字性能
+    - derive|^(.{2});(\w)(\w).*$|$1$2$3/| # 整句模式下，输入syff/ 出单字 增强单字性能
+    - derive|^(\w+?);(\w)(\w).*$|$1$2$3/| # 整句模式下，输入syff/ 出单字 增强单字性能
+
+    - derive/^(.{2}|\w+?);.*,(\w)(\w).*$/$1$2$3o/ # 整句模式下，输入syffo 出单字 增强单字性能
+    - derive|^(.{2});.*,(\w)(\w).*$|$1$2$3/| # 整句模式下，输入syff/ 出单字 增强单字性能
+    - derive|^(\w+?);.*,(\w)(\w).*$|$1$2$3/| # 整句模式下，输入syff/ 出单字 增强单字性能
+    - derive|^(.{2});.*,(\w)(\w).*$|$1$2$3/| # 整句模式下，输入syff/ 出单字 增强单字性能
 fuzhu_jdh:    ########################################位于词库第四个分号后
   __append:  
     - xform|^(.{2});.*?;.*?;.*?;(.*?);.*$|$1;$2|
@@ -773,65 +774,13 @@ fuzhu_hanxin:     ########################################位于词库第八个�
     - derive|^(.{2});.*,(\w)(\w).*$|$1$2$3/| # 整句模式下，输入syff/ 出单字 增强单字性能
 mohuyin:
   __append:
-    # 模糊音 可选择性开启 #这部分属于预留
+    # 模糊音 可选择性开启
     - derive/^z([a-z])/v$1/
     - derive/^c([a-z])/i$1/
     - derive/^s([a-z])/u$1/
     - derive/^v([a-z])/z$1/
     - derive/^i([a-z])/c$1/
     - derive/^u([a-z])/s$1/
-
-#以下配合同文输入法等使用，将共键字母后者转换为前者
-9jian:
-  __append:
-    - xform/b/a/
-    - xform/c/a/
-    - xform/e/d/
-    - xform/f/d/
-    - xform/h/g/
-    - xform/i/g/
-    - xform/k/j/
-    - xform/l/j/
-    - xform/n/m/
-    - xform/o/m/
-    - xform/q/p/
-    - xform/r/p/
-    - xform/s/p/
-    - xform/u/t/
-    - xform/v/t/
-    - xform/x/w/
-    - xform/y/w/
-    - xform/z/w/
-
-14jian:
-  __append:
-    - xform/w/q/
-    - xform/r/e/
-    - xform/y/t/
-    - xform/i/u/
-    - xform/p/o/
-    - xform/s/a/
-    - xform/f/d/
-    - xform/h/g/
-    - xform/k/j/
-    - xform/x/z/
-    - xform/v/c/
-    - xform/n/b/
-
-18jian:          
-  __append:
-    - xform/e/w/
-    - xform/t/r/
-    - xform/o/i/
-    - xform/d/s/
-    - xform/g/f/
-    - xform/k/j/
-    - xform/c/x/
-    - xform/n/b/
-
-26jian:          
-  __append: []
-
 
 __include: octagram/enable_for_sentence   #启用语言模型
 #__include: octagram/disable   #禁用语言模型

@@ -46,8 +46,6 @@ switches:
   - name: emoji
     states: [ 💀, 😄 ]
     reset: 1
-  - name: pinyinhint
-    states: [ 🔇, 🔊 ]
   - name: fuzhu_switch
     states: [ 助, 辅 ]
   - name: zrm_chaifen
@@ -328,9 +326,8 @@ key_binder:
     - { when: has_menu, accept: "Control+e", toggle: chinese_english}
     - { when: has_menu, accept: "Control+m", toggle: moqi_chaifen }
     - { when: has_menu, accept: "Control+z", toggle: zrm_chaifen }
-#使用快捷键Control+q开启和关闭辅助码显示
-    - { when: has_menu, accept: "Control+q", toggle: fuzhu_switch }
-#    - { when: composing, accept: "Control+o", toggle: "fuzhu_type_switch" }
+#使用快捷键Control+a开启和关闭辅助码显示Control+a开启和关闭输入码音调
+    - { when: has_menu, accept: "Control+a", toggle: fuzhu_switch }
 # 使用 tab 在不同音节之间跳转
     - { when: has_menu, accept: "Tab", send: "Control+Right" }
     - { when: composing, accept: "Tab", send: "Control+Right" }
@@ -361,6 +358,7 @@ algebra_pinyin:
 algebra_zrm: 
   __append:
     #- erase/^xx;.*$/
+    - xlit/āáǎàōóǒòēéěèīíǐìūúǔùǖǘǚǜü/aaaaooooeeeeiiiiuuuuvvvvv/
     - derive/^([jqxy])u(;.*)$/$1v$2/
     - derive/^([aoe])([ioun])(;.*)$/$1$1$2$3/
     - xform/^([aoe])(ng)?(;.*)$/$1$1$2$3/
@@ -394,6 +392,7 @@ algebra_zrm:
 algebra_flypy: 
   __append:
     #- erase/^xx$/
+    - xlit/āáǎàōóǒòēéěèīíǐìūúǔùǖǘǚǜü/aaaaooooeeeeiiiiuuuuvvvvv/
     - derive/^([jqxy])u(;.*)$/$1v$2/
     - derive/^([aoe])([ioun])(;.*)$/$1$1$2$3/
     - xform/^([aoe])(ng)?(;.*)$/$1$1$2$3/
@@ -426,6 +425,7 @@ algebra_flypy:
     - xlit/ⓆⓌⓇⓉⓎⓊⒾⓄⓅⓈⒹⒻⒼⒽⒿⓀⓁⓏⓍⒸⓋⒷⓃⓂ/qwrtyuiopsdfghjklzxcvbnm/
 algebra_mspy: 
   __append:
+    - xlit/āáǎàōóǒòēéěèīíǐìūúǔùǖǘǚǜü/aaaaooooeeeeiiiiuuuuvvvvv/
     - derive/^([jqxy])u(;.*)$/$1v$2/
     - derive/^([aoe].*)(;.*)$/o$1$2/
     - xform/^([ae])(.*)(;.*)$/$1$1$2$3/
@@ -461,6 +461,7 @@ algebra_mspy:
     - xlit/ⓆⓌⓇⓉⓎⓊⒾⓄⓅⓈⒹⒻⒼⒽⓂⒿⒸⓀⓁⓏⓍⓋⒷⓃ/qwrtyuiopsdfghmjcklzxvbn/
 algebra_sogou: 
   __append:
+    - xlit/āáǎàōóǒòēéěèīíǐìūúǔùǖǘǚǜü/aaaaooooeeeeiiiiuuuuvvvvv/
     - derive/^([jqxy])u(;.*)$/$1v$2/
     - derive/^([aoe].*)(;.*)$/o$1$2/
     - xform/^([ae])(.*)(;.*)$/$1$1$2$3/
@@ -495,6 +496,7 @@ algebra_sogou:
     - xlit/ⓆⓌⓇⓉⓎⓊⒾⓄⓅⓈⒹⒻⒼⒽⓂⒿⒸⓀⓁⓏⓍⓋⒷⓃ/qwrtyuiopsdfghmjcklzxvbn/
 algebra_ziguang: 
   __append:
+    - xlit/āáǎàōóǒòēéěèīíǐìūúǔùǖǘǚǜü/aaaaooooeeeeiiiiuuuuvvvvv/
     - derive/^([jqxy])u(;.*)$/$1v$2/
     - xform/^([aoe].*)(;.*)$/Ⓞ$1$2/  # 添上固定的零聲母o，先標記爲大寫O
     - xform/^(\w+?)en(;.*)$/$1Ⓦ$2/
@@ -527,6 +529,7 @@ algebra_ziguang:
     - xlit/ⓌⓉⓎⓊⒾⓄⓅⒶⒼⓈⒹⒻⒽⒿⓀⓁⓏⓍⒷⓃⓂⓆⓇ/wtyuiopagsdfhjklzxbnmqr/
 algebra_abc: 
   __append:
+    - xlit/āáǎàōóǒòēéěèīíǐìūúǔùǖǘǚǜü/aaaaooooeeeeiiiiuuuuvvvvv/
     - xform/^([aoe].*)(;.*)$/Ⓞ$1$2/
     - xform/^(\w+?)ei(;.*)$/$1Ⓠ$2/
     - xform/^(\w+?)ian(;.*)$/$1Ⓦ$2/

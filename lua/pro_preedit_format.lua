@@ -1,7 +1,3 @@
---配合同文输入法9、14、18键的情况下，由于共键输入导致的输入码显示异常，借助preedit接口变更显示码为注释中的全拼编码
---https://github.com/amzxyz/tongwenwanxiang  同文万象优化的输入法；
---https://github.com/amzxyz/rime_wanxiang_pinyin  万象拼音主项目。
-
 local function modify_preedit_filter(input, env)
     -- 获取配置中的分隔符
     local config = env.engine.schema.config
@@ -11,14 +7,17 @@ local function modify_preedit_filter(input, env)
     local auto_delimiter = delimiter:sub(1, 1)  -- 自动分隔符，默认为空格
     local manual_delimiter = delimiter:sub(2, 2) or "'"  -- 手动分隔符，默认为单引号
 
+    -- 检查开关状态
+    local is_tone_display = env.engine.context:get_option("tone_display")
+
     for cand in input:iter() do
         local genuine_cand = cand:get_genuine()
 
         -- 获取当前 preedit 中的输入码
         local preedit = genuine_cand.preedit or ""
 
-        -- 当 preedit 长度大于等于 2 时开始处理
-        if #preedit >= 2 then
+        -- 只有在开关开启的情况下才执行处理
+        if is_tone_display and #preedit >= 2 then
             -- 判断是否为英文候选词
             if string.find(genuine_cand.text, "%w+") then
                 -- 如果是英文候选词，保持原始 preedit
