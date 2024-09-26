@@ -8,7 +8,7 @@
 2. 对方案拼写运算进行结构化处理，将共键字母中例如WE中的e转换为w，多个字母同样处理；
 3. 配合定制键盘即可打字。
 <img src="[实例](https://storage.deepin.org/thread/202409250204031318_26.jpg)" width="300">
-<img src="[实例](https://storage.deepin.org/thread/202409250204112540_18.jpg))" width="300">   
+<img src="[实例](https://storage.deepin.org/thread/202409250204112540_18.jpg)" width="300">   
 **实现细节：** 
 
 1. 键盘的深度定制：
