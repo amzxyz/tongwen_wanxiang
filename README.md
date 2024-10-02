@@ -1,5 +1,5 @@
 ### 同文万象使用说明
-本方案为万象同文定制版 [万象基础版本](https://github.com/amzxyz/rime_wanxiang)  [万象增强版](https://github.com/amzxyz/rime_wanxiang_pinyin)
+本方案为万象同文定制版 [万象基础版本](https://github.com/amzxyz/rime_luoxia)  [万象增强版](https://github.com/amzxyz/rime_wanxiang_pinyin)
 
 **前言**：由于同文不具备拼音筛选器，因此想要体验特别好的小于26键的输入是不现实的，而依托万象拼音强大的词频（来自白霜）一定程度上弥补了这种不足。为了实现9键、14键、18键这几种常用的涉及到共键的输入方式，我们需要整体对方案层面进行运算处理，对同文主题进行深度定制，共同配合之下才能实现共键输入，下面我从几个方面阐述和说明。
 
