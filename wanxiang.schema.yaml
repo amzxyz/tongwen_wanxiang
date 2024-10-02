@@ -25,8 +25,8 @@ schema:
     万象拼音 支持常见双拼方案和全拼输入，辅助码同时支持墨奇;鹤形;自然码;简单鹤;仓颉首末;虎码首末;五笔前2;汉心码；采用万象归一的词库，换方案不换词库，不丢失用户词！
   dependencies:
     - melt_eng        # 英文输入，作为次翻译器挂载到拼音方案
-    - radical_pinyin  # 部件拆字，反查及辅码
-    - stroke   #笔画反查
+    - radical_pinyin  # 反查：部件拆字，反查及辅码
+    - stroke          #反查：笔画组字
 
 
 # 开关
@@ -63,6 +63,7 @@ engine:
   processors:
 #    - lua_processor@select_character          # 以词定字，有了辅助码了，想开启可以注释掉
     - lua_processor@*cold_word_drop.processor
+    - lua_processor@*quick_symbol    #快符引导
     - ascii_composer
     - recognizer
     - key_binder
@@ -349,6 +350,7 @@ recognizer:
     number: "^R[0-9]+[.]?[0-9]*"        # 脚本将自动获取第 2 个字符 R 作为触发前缀，响应 lua_translator@number_translator，数字金额大写
     gregorian_to_lunar: "^N[0-9]{1,8}"  # 脚本将自动获取第 2 个字符 N 作为触发前缀，响应 lua_translator@lunar，公历转农历，输入 N20240115 得到「二〇二三年腊月初五」
     calculator: "^V.*$"                 #计算器功能引导
+    quick_symbol_guide: "^'.*$"  # 快符引导，输入'键后，不自动上屏，等待后续输入
 
 # 从 default 继承快捷键
 key_binder:
@@ -364,8 +366,8 @@ key_binder:
     - { when: has_menu, accept: "Control+m", toggle: moqi_chaifen }
     - { when: has_menu, accept: "Control+z", toggle: zrm_chaifen }
 #使用快捷键Control+q开启和关闭辅助码显示
-    - { when: has_menu, accept: "Control+q", toggle: fuzhu_switch }
-    - { when: composing, accept: "Control+w", toggle: "tone_display" }
+    - { when: has_menu, accept: "Control+a", toggle: fuzhu_switch }
+    - { when: composing, accept: "Control+s", toggle: "tone_display" }
 # 使用 tab 在不同音节之间跳转
     - { when: has_menu, accept: "Tab", send: "Control+Right" }
     - { when: composing, accept: "Tab", send: "Control+Right" }
@@ -393,6 +395,7 @@ speller:
 ###############################以下是拼写运算规则中全拼转双拼码以及形码的过程，按照不同的方案规则划分段落###########################
 algebra_pinyin: 
   __append: 
+    - xlit/āáǎàōóǒòēéěèīíǐìūúǔùǖǘǚǜü/aaaaooooeeeeiiiiuuuuvvvvv/
     - erase/^xx;.*$/
 algebra_zrm: 
   __append:
